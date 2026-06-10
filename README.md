@@ -23,7 +23,11 @@ Here is a demonstration of MoodSync in action:
 
 *(Here is the MoodSync demonstration video!)*
 
-https://github.com/imFARSI/MoodSync-Real-Time-Emotion-Recognition-and-Adaptive-Music-AI/raw/master/moodync%20video.mp4
+
+
+https://github.com/user-attachments/assets/deaa9954-8c37-4647-ac6d-113a7675688c
+
+
 
 ## Setup & Usage
 1. Clone this repository.
