@@ -23,9 +23,7 @@ Here is a demonstration of MoodSync in action:
 
 *(Here is the MoodSync demonstration video!)*
 
-<video src="https://github.com/imFARSI/MoodSync/raw/master/moodync%20video.mp4" controls="controls" style="max-width: 100%;">
-  Your browser does not support the video tag.
-</video>
+https://github.com/imFARSI/MoodSync-Real-Time-Emotion-Recognition-and-Adaptive-Music-AI/raw/master/moodync%20video.mp4
 
 ## Setup & Usage
 1. Clone this repository.
