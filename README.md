@@ -24,8 +24,8 @@ Here is a demonstration of MoodSync in action:
 <details>
 <summary><b>🎬 View MoodSync Video</b></summary>
 
-*(Placeholder for moodsync video. If you have the video file, you can embed it here or link to YouTube).*
-[Link to MoodSync Video (moodsync_video.mp4)](#)
+*(Here is the MoodSync demonstration video!)*
+[Link to MoodSync Video (moodync video.mp4)](moodync%20video.mp4)
 
 </details>
 
