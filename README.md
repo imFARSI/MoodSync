@@ -1,4 +1,4 @@
-# MoodSync: Real-Time Emotion Recognition & Adaptive Music AI 🎵😊
+# MoodSync: Real-Time Emotion Recognition & Adaptive Music AI
 
 MoodSync is a real-time facial emotion recognition system built using Convolutional Neural Networks (CNNs). It dynamically detects a user's mood via a live webcam feed and features an adaptive music recommendation system based on the detected emotion.
 
@@ -21,16 +21,11 @@ Our proposed model, **FERNET**, achieved a **71.45%** accuracy and an AUC of **0
 
 Here is a demonstration of MoodSync in action:
 
-<details>
-<summary><b>🎬 View MoodSync Video</b></summary>
-
 *(Here is the MoodSync demonstration video!)*
 
 <video src="https://github.com/imFARSI/MoodSync/raw/master/moodync%20video.mp4" controls="controls" style="max-width: 100%;">
   Your browser does not support the video tag.
 </video>
-
-</details>
 
 ## Setup & Usage
 1. Clone this repository.
