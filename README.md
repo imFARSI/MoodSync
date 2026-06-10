@@ -15,7 +15,7 @@ Our proposed model, **FERNET**, achieved a **71.45%** accuracy and an AUC of **0
 1. Custom Lightweight CNN
 2. DenseNet121 (Transfer Learning)
 
-*Check out the IEEE-formatted research paper in the `moodsync.tex` source or the presentation script in `Presentation_Script.md` for complete academic details.*
+*Check out the presentation script in `Presentation_Script.md` for complete academic details.*
 
 ## Details & Demonstration
 
