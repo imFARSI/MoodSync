@@ -1,0 +1,603 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{MoodSync: Real-Time Facial Emotion Recognition\\with Adaptive Music Recommendation}
+
+\author{
+\IEEEauthorblockN{Salman Farsi}
+\IEEEauthorblockA{\textit{Dept. of Computer Science and Engineering} \\
+\textit{BRAC University}\\
+Dhaka, Bangladesh \\
+salman.farsi@g.bracu.ac.bd}
+\and
+\IEEEauthorblockN{Rifaat Nuha}
+\IEEEauthorblockA{\textit{Dept. of Computer Science and Engineering} \\
+\textit{BRAC University}\\
+Dhaka, Bangladesh \\
+rifaat.nuha@g.bracu.ac.bd}
+}
+
+\maketitle
+
+% -------------------------------------------------------
+\begin{abstract}
+Emotion recognition from facial expressions plays a vital role in enabling
+intelligent human computer interaction systems. Despite advances in deep
+learning, achieving high classification accuracy on real world data while
+maintaining practical deployability remains a significant challenge. This
+study presents MoodSync, a real time facial emotion recognition system built
+on a balanced subset of the FER-2013 dataset, comprising 10,000 training
+images and 6,043 test images across five emotion categories: angry, happy,
+neutral, sad, and surprise. Three convolutional neural network architectures
+were evaluated and compared, namely a custom CNN, DenseNet121, and FERNET,
+a deep VGG style network, to identify the most effective model for five
+class emotion classification. All models were trained on preprocessed
+48 by 48 pixel grayscale images with online data augmentation applied to
+improve generalization. Performance was measured using accuracy, weighted
+precision, weighted recall, weighted F1 score, and macro average AUC.
+FERNET achieved the highest classification accuracy of 71.45\%, a weighted
+F1 score of 71.60\%, and an AUC of 0.922, outperforming both the custom
+CNN (64.80\%) and DenseNet121 (56.02\%). Beyond emotion classification,
+MoodSync integrates a rule based music recommendation module that dynamically
+suggests genre appropriate tracks aligned with the detected emotional state,
+forming a complete end to end affective computing application suitable for
+real time webcam deployment.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Facial Emotion Recognition, Convolutional Neural Network, FER-2013,
+FERNET, VGGNet, Deep Learning, Affective Computing, Music Recommendation,
+Human Computer Interaction
+\end{IEEEkeywords}
+
+% -------------------------------------------------------
+\section{Introduction}
+
+Human emotions are complex psychological states that manifest through facial
+expressions, body language, and vocal cues. Of these channels, facial
+expressions are the most universally consistent and visually accessible,
+making them the primary target for automated affective computing systems.
+The ability to automatically detect and interpret facial emotions in real
+time has substantial implications across a wide range of applications,
+including mental health monitoring, adaptive e-learning platforms, driver
+drowsiness detection, and intelligent human computer interaction \cite{b1}.
+As computing systems become increasingly embedded in daily life, enabling
+machines to perceive and respond to human emotional states represents a
+critical frontier in artificial intelligence research.
+
+The FER-2013 dataset, one of the most widely used benchmarks for facial
+emotion recognition, presents a particularly challenging recognition
+environment owing to its low resolution 48 by 48 pixel grayscale images
+collected under diverse and largely uncontrolled real world conditions.
+Prior work has demonstrated that achieving accuracy above 70\% is non
+trivial, with many baseline CNN architectures plateauing in the 60 to 65\%
+range and more sophisticated architectures with extensive hyperparameter
+tuning reaching approximately 73\% \cite{b3}. These constraints make
+architectural choice and training strategy especially consequential.
+
+This paper presents MoodSync, a deep learning system designed to address
+both the accuracy and deployability challenges of real time facial emotion
+recognition. MoodSync evaluates three CNN architectures on a balanced five
+class subset of FER-2013: a lightweight custom CNN, DenseNet121, and
+FERNET, a deep VGG style network. The best performing model, FERNET, is
+subsequently deployed in a real time inference pipeline using an OpenCV DNN
+based face detector and a temporal prediction smoothing buffer. The system
+incorporates a music recommendation module that maps detected emotions to
+genre appropriate suggestions, providing a complete affective computing
+application.
+
+% -------------------------------------------------------
+\section{Literature Review}
+
+Automated facial emotion recognition has become a central challenge in
+affective computing and human computer interaction. MoodSync builds upon
+prior work in deep learning based FER, spanning traditional CNN pipelines,
+attention mechanisms, and hybrid architectures.
+
+\subsection{CNN Based Feature Augmentation}
+Amal et al.\ \cite{b1} proposed combining raw pixel inputs with handcrafted
+spatial descriptors, specifically face landmarks and Histogram of Oriented
+Gradients (HOG) features, before feeding data into a CNN classifier. Face
+detection used a Local Binary Pattern (LBP) classifier followed by landmark
+localization. The augmented representation yielded 75.1\% accuracy across
+seven emotion categories, compared to only 59.1\% with raw pixels alone,
+demonstrating that handcrafted descriptors meaningfully complement learned
+CNN representations under challenging real world conditions.
+
+\subsection{Spatial Attention Mechanisms}
+Abdolrashidi \cite{b2} proposed an attention augmented deep CNN with a
+spatial attention module to selectively emphasize discriminative facial
+regions such as the eyes, eyebrows, and mouth. Visualization experiments
+confirmed that the attention maps aligned with theoretically motivated
+facial landmarks. Despite employing fewer layers than many competing
+architectures, this attentional model outperformed several standard CNN
+baselines on established FER benchmarks.
+
+\subsection{VGGNet Architecture Optimization}
+Khaireddin and Chen \cite{b3} demonstrated that a well optimized VGGNet
+based classifier, subjected to systematic hyperparameter search, learning
+rate scheduling, and optimizer comparison, achieved 73.28\% accuracy on
+standard FER datasets. Saliency map analyses confirmed that learned
+representations concentrated on the eye and mouth regions. This work directly
+motivates MoodSync's adoption of FERNET, a VGG style backbone.
+
+\subsection{Multiscale and Wavelet Channel Attention}
+Liu et al.\ \cite{b4} introduced a CNN incorporating multiscale convolutional
+layers paired with a wavelet channel attention module to enhance feature
+extraction. Multiscale convolutions capture both coarse structural cues and
+fine grained textural patterns, while the wavelet based attention module
+amplifies informative feature maps across layers. Experiments on two
+expression datasets demonstrated consistent accuracy gains over vanilla
+CNN and ResNet baselines \cite{b4}.
+
+\subsection{Temporal Modeling via CNN RNN Hybridization}
+Manalu and Rifai \cite{b5} developed a hybrid architecture combining CNN
+spatial feature extraction with Long Short Term Memory (LSTM) units for
+video based emotion detection. Evaluated on the Emotion Wearable dataset,
+results confirmed that integrating temporal analysis with spatial feature
+extraction substantially broadens the scope of emotion recognition. Although
+MoodSync processes individual frames, these findings identify sequential
+modeling as a well motivated future direction.
+
+\subsection{Hybrid Deep Classical Classification Pipelines}
+Shahzad et al.\ \cite{b6} extracted features from multiple fully connected
+layers of pre-trained AlexNet and VGG-16 and supplied them to SVM, KNN, and
+ensemble classifiers, achieving accuracy improvements of 7 to 9\% over
+standard Softmax baselines on the MLF-W-FER dataset. This resonates with
+MoodSync's multi model comparative evaluation strategy.
+
+% -------------------------------------------------------
+\section{Methodology}
+
+\subsection{Dataset Description}
+
+MoodSync uses the FER-2013 dataset comprising 48 by 48 pixel grayscale
+images collected under diverse real world conditions. This study covers five
+emotion categories: angry, happy, neutral, sad, and surprise. The disgust
+and fear categories were excluded as they were absent from the local dataset
+directory. The full dataset contains 24,176 training images and 6,043 test
+images, as detailed in Table~\ref{tab:distribution}.
+
+\begin{table}[htbp]
+\caption{Original FER-2013 Class Distribution}
+\label{tab:distribution}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Emotion} & \textbf{Train} & \textbf{Test} \\
+\hline
+Angry    & 3,995  & 958   \\
+Happy    & 7,215  & 1,774 \\
+Neutral  & 4,965  & 1,233 \\
+Sad      & 4,830  & 1,247 \\
+Surprise & 3,171  & 831   \\
+\hline
+\textbf{Total} & \textbf{24,176} & \textbf{6,043} \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+The training set exhibits a notable class imbalance, with the happy class
+containing more than twice the number of images as surprise. Fig.~\ref{fig:samples}
+shows one sample image from each emotion class, highlighting the low
+resolution and real world diversity of the dataset. Fig.~\ref{fig:dist}
+visualizes the full class distribution across train and test splits.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{emotion_samples.png}}
+\caption{Sample images from each of the five emotion classes in the
+FER-2013 training set. All images are 48$\times$48 pixels in grayscale.}
+\label{fig:samples}
+\end{figure}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{dataset_distribution.png}}
+\caption{Dataset distribution: image counts per emotion class for train
+and test splits, illustrating class imbalance in the training set.}
+\label{fig:dist}
+\end{figure}
+
+\subsection{Data Preprocessing}
+
+The preprocessing pipeline applies the following sequential steps
+consistently across all three model architectures.
+
+\textit{a) Grayscale Loading and Resizing:} All images were loaded in grayscale
+format using OpenCV's \texttt{IMREAD\_GRAYSCALE} flag. A random sample of
+100 images per class confirmed uniform dimensions of (48, 48) and a pixel
+range of [0, 255]. An explicit resize step was applied to guarantee
+consistency across all inputs.
+
+\textit{b) Class Balancing:} The original training set's class imbalance was
+addressed by randomly sampling a maximum of 2,000 images per class, resulting
+in a balanced training corpus of exactly 10,000 images (2,000 per class). The
+test set was used in its original unmodified form (6,043 images) to ensure
+evaluation fidelity and avoid introducing optimistic bias.
+
+\textit{c) Normalization:} Pixel values were normalized from the integer range
+[0, 255] to floating point values in [0, 1] by dividing by 255.0, which
+accelerates gradient descent convergence and ensures numerical stability
+during training.
+
+\textit{d) Channel Dimension Expansion:} Normalized arrays were reshaped to
+(N, 48, 48, 1) for grayscale models. For DenseNet121, which requires three
+channel input, the single channel was replicated three times using NumPy's
+\texttt{repeat}, producing tensors of shape (N, 48, 48, 3).
+
+\textit{e) Label Encoding:} String labels were encoded to integer indices using
+scikit-learn's \texttt{LabelEncoder} with alphabetical mapping
+(angry=0, happy=1, neutral=2, sad=3, surprise=4), then converted to one
+hot categorical format using Keras's \texttt{to\_categorical}, yielding
+label arrays of shape (N, 5).
+
+\textit{f) Data Augmentation:} Online data augmentation was applied during
+training using Keras's \texttt{ImageDataGenerator} with random rotation
+($\pm$10 to $\pm$15 degrees), random width and height shift (up to 10\%),
+and random horizontal flipping. Augmentation was applied only to the training
+pipeline and disabled during test set evaluation. Fig.~\ref{fig:aug} shows
+a representative batch of augmented training images.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{augmented_samples.png}}
+\caption{Sample augmented training images illustrating random rotation,
+shift, and horizontal flip transformations applied during training.}
+\label{fig:aug}
+\end{figure}
+
+The final verified input shapes were: X\_train: (10000, 48, 48, 1),
+y\_train: (10000, 5), X\_test: (6043, 48, 48, 1), y\_test: (6043, 5).
+
+\subsection{Model Architectures}
+
+\textit{a) FERNET (VGG Style Architecture):} FERNET is the primary proposed
+model, inspired by the VGGNet design principle of stacking paired convolutional
+layers before spatial downsampling. The architecture comprises three VGG style
+blocks followed by a fully connected classifier. Each block contains two Conv2D
+layers with Exponential Linear Unit (ELU) activation and Batch Normalization,
+followed by Max Pooling and Dropout. Filter depths progress from 64 to 128 to
+256 across the three blocks, enabling progressively abstract feature
+representations. The classifier consists of Dense(128, ELU), Batch
+Normalization, Dropout(0.5), and five class Softmax output. Total trainable
+parameters: approximately 2.33 million. Training used the Adam optimizer with
+an initial learning rate of 0.001, batch size 128, and a maximum of 50 epochs.
+\texttt{EarlyStopping} with patience 12 monitored validation accuracy.
+\texttt{ReduceLROnPlateau} halved the learning rate upon validation loss
+plateau with patience 5, progressively reducing the rate from 0.001 to
+approximately $6.25 \times 10^{-5}$ over the course of training.
+
+\textit{b) Custom CNN (Lightweight Baseline):} The custom CNN is a three
+block lightweight baseline. Each block contains one Conv2D with ReLU
+activation, Batch Normalization, Max Pooling, and Dropout (0.25). Filter
+counts follow 32, 64, and 128. The classifier uses Dense(128, ReLU), Batch
+Normalization, Dropout(0.5), and Softmax output. Total parameters:
+approximately 357,000. Training used batch size 64, up to 60 epochs, and
+\texttt{EarlyStopping} with patience 5. Early stopping triggered at Epoch 15.
+
+\textit{c) DenseNet121 (Deep Architecture Baseline):} DenseNet121 was
+evaluated without pretrained ImageNet weights and without its top
+classification layers. A \texttt{GlobalAveragePooling2D} layer was appended,
+followed by Dense(256, ELU), Batch Normalization, Dropout(0.5), and Softmax
+output. Total parameters: approximately 7.30 million. Training used batch
+size 64, up to 40 epochs, \texttt{EarlyStopping} with patience 7, and
+\texttt{ReduceLROnPlateau} with patience 3. All grayscale inputs were
+converted to pseudo-RGB by channel replication. Early stopping triggered at
+Epoch 27.
+
+\subsection{Evaluation Metrics}
+
+All models were evaluated on the unmodified FER-2013 test set using overall
+accuracy, weighted precision, weighted recall, weighted F1 score, and macro
+average AUC. Weighted metrics account for test set class imbalance by
+weighting per class scores by the number of true instances in each class.
+Macro average AUC was computed by averaging the one vs.\ rest AUC values
+across all five emotion classes using scikit-learn's \texttt{roc\_curve}
+and \texttt{auc} functions.
+
+\subsection{Real Time Inference Pipeline}
+
+Following model evaluation, FERNET was deployed in a real time webcam
+inference pipeline. Face detection used OpenCV's DNN module with a ResNet-10
+SSD based face detector. Face regions with detection confidence below 0.5
+were discarded. Each accepted face crop was converted to grayscale, resized
+to 48 by 48 pixels, normalized, and reshaped to (1, 48, 48, 1) for
+prediction. A sliding window prediction smoothing buffer of 15 frames was
+maintained using Python's \texttt{collections.deque}. The final emotion
+label at each frame was determined by averaging the predicted probability
+vectors across the buffer and selecting the class with the highest mean
+probability. Each detected emotion was then mapped to a genre appropriate
+music recommendation via a fixed lookup table.
+
+% -------------------------------------------------------
+\section{Results and Discussion}
+
+\subsection{Performance Metrics}
+
+Table~\ref{tab:results} presents the complete performance metrics for all
+three models on the FER-2013 test set. FERNET achieved the highest scores
+across all five metrics. Fig.~\ref{fig:perf} visualizes the accuracy and
+F1 score comparison, showing a gap of approximately 6.65 percentage points
+between FERNET and the Custom CNN, and 15.43 percentage points between
+FERNET and DenseNet121 in accuracy.
+
+\begin{table}[htbp]
+\caption{Model Performance Comparison on FER-2013 Test Set}
+\label{tab:results}
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Model} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{AUC} \\
+\hline
+FERNET      & 71.45\% & 72.28\% & 71.45\% & 71.60\% & 0.922 \\
+Custom CNN  & 64.80\% & 65.22\% & 64.80\% & 64.80\% & 0.887 \\
+DenseNet121 & 56.02\% & 58.93\% & 56.02\% & 56.15\% & 0.848 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{model_performance.png}}
+\caption{Final model performance comparison: accuracy and F1 score for
+FERNET, Custom CNN, and DenseNet121 on the FER-2013 test set.}
+\label{fig:perf}
+\end{figure}
+
+\subsection{Model Analysis}
+
+FERNET trained over the full 50 epochs with consistent improvement in
+validation accuracy. The progressive learning rate reduction strategy proved
+effective: each scheduled halving of the learning rate produced a measurable
+accuracy gain. Training accuracy reached 77.18\% at Epoch 50 against a
+validation accuracy of 71.45\%, indicating moderate overfitting controlled by
+Dropout regularization and online data augmentation. The high AUC of 0.922
+confirms strong discriminative capability across all five emotion classes,
+consistent with Khaireddin and Chen \cite{b3} who achieved 73.28\% on a
+comparable benchmark with a similarly optimized VGGNet variant.
+
+The Custom CNN converged rapidly, with early stopping triggered at Epoch 15.
+Despite its substantially smaller parameter count (357K versus 2.33M for
+FERNET), it achieved a solid 64.80\% accuracy. The alignment between accuracy
+(64.80\%) and F1 score (64.80\%) indicates balanced performance across emotion
+classes without systematic bias.
+
+DenseNet121 achieved the lowest accuracy at 56.02\% despite having the
+highest parameter count (7.30 million). This underperformance is attributable
+to two principal factors. First, DenseNet121 was designed for higher
+resolution inputs, and its dense connectivity pattern adapts less effectively
+to 48 by 48 pixel FER-2013 images. Second, training from random
+initialization required learning 7.30 million parameters from only 10,000
+training images, which is insufficient for a network of this depth.
+Significant validation loss spikes at Epoch 3 (29.08) and Epoch 5 (38.49)
+indicate training instability from which the model only partially recovered.
+
+\subsection{Confusion Matrix Analysis}
+
+Fig.~\ref{fig:cm1}, Fig.~\ref{fig:cm2}, and Fig.~\ref{fig:cm3} show the
+confusion matrices for FERNET, Custom CNN, and DenseNet121 respectively.
+Several consistent patterns are evident across all three models.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{cm_fernet.png}}
+\caption{Confusion matrix for FERNET on the FER-2013 test set.}
+\label{fig:cm1}
+\end{figure}
+
+The happy class is the best classified emotion in all models. FERNET
+correctly classified 1,453 of 1,774 happy samples (81.9\%), as the happy
+expression has highly distinctive visual features including a prominent smile
+and raised cheeks. The surprise class also achieved strong results in FERNET,
+with 712 of 831 samples correctly classified (85.7\%), the highest per class
+recall for any emotion in FERNET.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{cm_custom_cnn.png}}
+\caption{Confusion matrix for Custom CNN on the FER-2013 test set.}
+\label{fig:cm2}
+\end{figure}
+
+The sad class exhibits the greatest misclassification rate across all models.
+In FERNET, only 676 of 1,247 sad samples (54.2\%) are correctly classified,
+with 315 misclassified as neutral, the largest single off diagonal entry in
+the FERNET matrix. This overlap between sad and neutral is consistent with
+the literature, as both expressions involve similar reduced facial muscle
+activation \cite{b2}. The neutral class similarly suffers from confusion with
+sad, with FERNET correctly classifying 877 of 1,233 neutral samples (71.1\%).
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{cm_densenet121.png}}
+\caption{Confusion matrix for DenseNet121 on the FER-2013 test set.}
+\label{fig:cm3}
+\end{figure}
+
+The angry class shows moderate performance in FERNET (600 of 958 correct,
+62.6\%), with frequent confusion with both neutral (149) and sad (146),
+reflecting the subtle visual differences between these states in low
+resolution grayscale images.
+
+\subsection{ROC Curve Analysis}
+
+Fig.~\ref{fig:roc} presents the macro average ROC curves for all three
+models. All models perform well above the random classifier baseline (the
+dashed diagonal line), demonstrating genuine discriminative capability.
+FERNET's curve (blue) rises steeply from the origin, achieving a true
+positive rate of approximately 0.78 at a false positive rate of only 0.10,
+confirming high sensitivity while minimizing false alarms across all emotion
+classes. The Custom CNN (green) achieves a slightly lower but competitive AUC
+of 0.887, while DenseNet121 (red) trails with 0.848. The ordering of the
+three curves is consistent with the accuracy and F1 rankings in
+Table~\ref{tab:results}.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{roc_curves.png}}
+\caption{Macro average ROC curves for all three models. FERNET achieves
+the highest AUC of 0.922, followed by Custom CNN (0.887) and DenseNet121
+(0.848).}
+\label{fig:roc}
+\end{figure}
+
+\subsection{Real Time System and Music Recommendation}
+
+The deployed FERNET pipeline, integrated with the ResNet-10 SSD face
+detector and 15 frame temporal smoothing buffer, demonstrated stable and
+responsive emotion classification under real time webcam conditions. The
+smoothing buffer effectively reduced frame to frame label flickering,
+producing a consistent and natural user experience. Table~\ref{tab:music}
+summarizes the emotion to music genre mapping used in deployment.
+
+\begin{table}[htbp]
+\caption{Emotion to Music Recommendation Mapping}
+\label{tab:music}
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Detected Emotion} & \textbf{Music Recommendation} \\
+\hline
+Angry    & Relaxing Music --- Lo-fi / Acoustic \\
+Happy    & Upbeat Music --- Pop / Dance / EDM  \\
+Neutral  & Ambient Playlist --- Chill / Lounge \\
+Sad      & Calm Music --- Piano / Soft Acoustic \\
+Surprise & Energetic Music --- Rock / Hype Beats \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+To validate the end to end functionality of the MoodSync system, the
+deployed pipeline was tested in a live two person webcam session. Three
+consecutive emotional states were enacted and captured: neutral, surprise,
+and happy. In each case the system correctly detected both faces using the
+ResNet-10 SSD detector, assigned emotion labels with associated confidence
+scores, and displayed the corresponding music recommendation on screen.
+
+Fig.~\ref{fig:rt_neutral} shows the neutral detection state. Both subjects
+exhibit a composed, expressionless appearance. The system correctly assigned
+the neutral label to both detected faces with a smoothed confidence of 75.8\%,
+triggering the Ambient Playlist recommendation.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{realtime_neutral.png}}
+\caption{Real time inference output for the neutral emotion. Both faces are
+correctly detected and labelled as Neutral (75.8\%) with the Ambient
+Playlist music recommendation displayed.}
+\label{fig:rt_neutral}
+\end{figure}
+
+Fig.~\ref{fig:rt_surprise} shows the surprise detection state. Both subjects
+exhibited wide eyes and open mouths. The system assigned the surprise label
+to both faces with confidence scores of 58.6\% and 59\% respectively, and
+triggered the Energetic Music recommendation. The lower confidence compared
+to the neutral state reflects the inherent ambiguity of the surprise
+expression at real world webcam resolution.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{realtime_surprise.png}}
+\caption{Real time inference output for the surprise emotion. Both faces are
+correctly labelled as Surprise with confidence scores of 58.6\% and 59\%,
+and the Energetic Music recommendation is displayed.}
+\label{fig:rt_surprise}
+\end{figure}
+
+Fig.~\ref{fig:rt_happy} shows the happy detection state. Both subjects
+displayed prominent smiles. The system achieved the highest per frame
+confidences across all three demonstration states, correctly classifying
+both faces as happy with scores of 86.9\% and 89.6\% respectively, and
+displaying the Upbeat Music recommendation. This result is consistent with
+the confusion matrix findings in Section~IV-C, which identified happy as
+the best classified emotion across all evaluated models.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{realtime_happy.png}}
+\caption{Real time inference output for the happy emotion. Both faces are
+correctly labelled as Happy with high confidence scores of 86.9\% and
+89.6\%, and the Upbeat Music recommendation is displayed.}
+\label{fig:rt_happy}
+\end{figure}
+
+Across all three demonstrations, the system accurately detected multiple
+faces simultaneously, applied temporal smoothing to suppress frame level
+flickering, and rendered the correct music recommendation in real time.
+The colour coded bounding box scheme, where cyan indicates neutral, yellow
+indicates surprise, and green indicates happy, provides an immediate visual
+indicator of the detected emotional state, enhancing usability.
+
+% -------------------------------------------------------
+\section{Conclusion}
+
+This paper presented MoodSync, a real time facial emotion recognition system
+integrating a deep VGG style CNN with an adaptive music recommendation
+module. Three CNN architectures were systematically evaluated on a balanced
+subset of the FER-2013 dataset. FERNET achieved the best performance at
+71.45\% accuracy, 71.60\% weighted F1 score, and AUC of 0.922, substantially
+outperforming the Custom CNN (64.80\%) and DenseNet121 (56.02\%). Confusion
+matrix analysis revealed that happy and surprise are the best classified
+emotions, while sad and neutral exhibit the highest misclassification overlap
+due to their visual similarity at low resolution. ROC analysis confirmed that
+all three models operate well above the random baseline, with FERNET
+demonstrating the strongest overall discriminability. The real time deployment
+pipeline, combining DNN based face detection with a 15 frame prediction
+smoothing buffer, demonstrated stable and responsive performance, confirming
+MoodSync's practical viability as an end to end affective computing application.
+
+Several directions for future work were identified. First, training used only
+10,000 of the available 24,176 training images; incorporating all data with
+weighted loss functions or SMOTE oversampling may yield further accuracy
+improvements. Second, integrating recurrent structures such as LSTM \cite{b5}
+could improve temporal consistency for continuous video streams. Third, the
+music recommendation module could be replaced with a personalized engine
+accounting for user preferences and listening history. Finally, extending
+the emotion taxonomy to include disgust and fear would broaden coverage for
+general affective computing applications.
+
+% -------------------------------------------------------
+\begin{thebibliography}{00}
+
+\bibitem{b1}
+V.~S. Amal, S.~Suresh, and G.~Deepa,
+``Real-time emotion recognition from facial expressions using convolutional
+neural network with FER2013 dataset,''
+in \textit{Smart Innovation, Systems and Technologies},
+pp. 541--551, Springer Singapore, 2021.
+
+\bibitem{b2}
+S.~M. M. M.~A. Abdolrashidi,
+``Deep-Emotion: Facial expression recognition using attentional convolutional
+network,''
+\textit{Sensors}, vol. 21, no. 9, p. 3046, 2021.
+
+\bibitem{b3}
+Y.~Khaireddin and Z.~Chen,
+``Facial emotion recognition: State of the art performance on FER2013,''
+\textit{arXiv preprint arXiv:2105.03588}, 2021.
+
+\bibitem{b4}
+J.~Liu, X.~Lin, P.~Ji, J.~Chen, and J.~Zhang,
+``Multiscale wavelet attention convolutional network for facial expression
+recognition,''
+\textit{Scientific Reports}, vol. 15, no. 1, p. 22219, 2025.
+
+\bibitem{b5}
+H.~V. Manalu and A.~P. Rifai,
+``Detection of human emotions through facial expressions using hybrid
+convolutional neural network recurrent neural network algorithm,''
+\textit{Intelligent Systems with Applications}, vol. 21, p. 200339, 2024.
+
+\bibitem{b6}
+H.~M. Shahzad, S.~M. Bhatti, A.~Jaffar, S.~Akram, M.~Alhajlah,
+and A.~Mahmood,
+``Hybrid facial emotion recognition using CNN-based features,''
+\textit{Applied Sciences}, vol. 13, no. 9, p. 5572, 2023.
+
+\end{thebibliography}
+
+\end{document}

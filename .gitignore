@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Large files
+*.npy
+
+# Optional: Ignore large model files if they exceed GitHub's limits (uncomment if necessary)
+# *.h5
+# moodsync_densenet121.h5
