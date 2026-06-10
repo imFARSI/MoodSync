@@ -22,3 +22,6 @@ venv.bak/
 # Optional: Ignore large model files if they exceed GitHub's limits (uncomment if necessary)
 # *.h5
 # moodsync_densenet121.h5
+
+*.tex
+report_figures/
